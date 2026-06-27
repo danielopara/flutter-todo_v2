@@ -9,7 +9,6 @@ class TodoRepository {
   Database? _db;
 
   Future<Database> get database async {
-    // _db ?? = await _initDb();
     _db ??= await _openDatabase();
     return _db!;
   }
@@ -22,17 +21,17 @@ class TodoRepository {
       path,
       version: 1,
       onCreate: (db, version) async {
-        await db.execute(''' 
+        await db.execute('''
           CREATE TABLE todos(
-          id TEXT PRIMARY KEY,
-          title TEXT,
-          description TEXT,
-          status TEXT,
-          priority TEXT,
-          isComplete INTEGER,
-          createdAt TEXT,
-          dueDate TEXT,
-          completionDate TEXT
+            id TEXT PRIMARY KEY,
+            title TEXT NOT NULL,
+            description TEXT NOT NULL,
+            status TEXT NOT NULL,
+            priority TEXT NOT NULL,
+            isComplete INTEGER NOT NULL DEFAULT 0,
+            createdAt TEXT NOT NULL,
+            dueDate TEXT NOT NULL,
+            completionDate TEXT
           )
         ''');
       },
@@ -71,6 +70,6 @@ class TodoRepository {
 
   Future<void> deleteCompleted() async {
     final db = await database;
-    await db.delete('todos', where: 'is_completed = 1');
+    await db.delete('todos', where: 'isComplete = 1');
   }
 }

@@ -4,6 +4,9 @@ enum TodoStatus { notStarted, inProgress, completed }
 
 enum TodoPriority { low, medium, high }
 
+// Sentinel for copyWith to distinguish "set to null" from "leave unchanged".
+const _absent = Object();
+
 class TodoModel {
   final String id;
   final String title;
@@ -11,7 +14,7 @@ class TodoModel {
   final TodoStatus status;
   final TodoPriority priority;
   final bool isComplete;
-  final DateTime? createdAt;
+  final DateTime createdAt;
   final DateTime dueDate;
   final DateTime? completionDate;
 
@@ -22,7 +25,7 @@ class TodoModel {
     this.status = TodoStatus.notStarted,
     required this.priority,
     this.isComplete = false,
-    this.createdAt,
+    required this.createdAt,
     required this.dueDate,
     this.completionDate,
   });
@@ -43,7 +46,6 @@ class TodoModel {
       isComplete: false,
       createdAt: DateTime.now(),
       dueDate: dueDate,
-      completionDate: null,
     );
   }
 
@@ -56,7 +58,7 @@ class TodoModel {
     bool? isComplete,
     DateTime? createdAt,
     DateTime? dueDate,
-    DateTime? completionDate,
+    Object? completionDate = _absent,
   }) {
     return TodoModel(
       id: id ?? this.id,
@@ -67,7 +69,9 @@ class TodoModel {
       isComplete: isComplete ?? this.isComplete,
       createdAt: createdAt ?? this.createdAt,
       dueDate: dueDate ?? this.dueDate,
-      completionDate: completionDate ?? this.completionDate,
+      completionDate: completionDate == _absent
+          ? this.completionDate
+          : completionDate as DateTime?,
     );
   }
 
@@ -76,10 +80,10 @@ class TodoModel {
       'id': id,
       'title': title,
       'description': description,
-      'status': status,
-      'priority': priority,
-      'isComplete': isComplete,
-      'createdAt': createdAt?.toIso8601String(),
+      'status': status.name,
+      'priority': priority.name,
+      'isComplete': isComplete ? 1 : 0,
+      'createdAt': createdAt.toIso8601String(),
       'dueDate': dueDate.toIso8601String(),
       'completionDate': completionDate?.toIso8601String(),
     };
@@ -90,18 +94,10 @@ class TodoModel {
       id: map['id'] as String,
       title: map['title'] as String,
       description: map['description'] as String,
-      status: TodoStatus.values.firstWhere(
-        (e) => e.toString() == 'TodoStatus.${map['status']}',
-        orElse: () => TodoStatus.notStarted,
-      ),
-      priority: TodoPriority.values.firstWhere(
-        (e) => e.toString() == 'TodoPriority.${map['priority']}',
-        orElse: () => TodoPriority.low,
-      ),
-      isComplete: map['isComplete'] as bool? ?? false,
-      createdAt: map['createdAt'] != null
-          ? DateTime.parse(map['createdAt'] as String)
-          : null,
+      status: TodoStatus.values.byName(map['status'] as String),
+      priority: TodoPriority.values.byName(map['priority'] as String),
+      isComplete: (map['isComplete'] as int? ?? 0) != 0,
+      createdAt: DateTime.parse(map['createdAt'] as String),
       dueDate: DateTime.parse(map['dueDate'] as String),
       completionDate: map['completionDate'] != null
           ? DateTime.parse(map['completionDate'] as String)
